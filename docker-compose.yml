@@ -11,6 +11,11 @@ services:
       - 5432:5432
     volumes:
       - ${DATA_PATH}:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d payments_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 
   kafka:
@@ -33,3 +38,27 @@ services:
       - 9092:9092
     volumes:
       - ${KAFKA_PATH}:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  payments:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payments
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payments_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: user
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - 8080:8080
