@@ -60,5 +60,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: user
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATA_PATH: ./postgres_data
+      KAFKA_PATH: ./kafka_data
     ports:
       - 8080:8080
