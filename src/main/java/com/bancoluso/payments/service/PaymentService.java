@@ -2,6 +2,7 @@ package com.bancoluso.payments.service;
 
 import com.bancoluso.payments.dto.PaymentEventDto;
 import com.bancoluso.payments.dto.PaymentEventResponseDto;
+import com.bancoluso.payments.dto.PaymentSearchCriteria;
 import com.bancoluso.payments.dto.PaymentStatusResponse;
 import com.bancoluso.payments.entity.Payment;
 import com.bancoluso.payments.exception.PaymentNotFoundException;
@@ -75,6 +76,7 @@ public class PaymentService {
     }
 
     public PaymentStatusResponse getPaymentStatus(String referenceId) {
+        log.info("Payment status [referenceId={}]", referenceId);
         Payment payment = paymentRepository.findByReferenceId(referenceId)
                 .orElseThrow(() -> new PaymentNotFoundException(referenceId));
         return new PaymentStatusResponse(
@@ -85,7 +87,11 @@ public class PaymentService {
     }
 
     public Page<PaymentEventResponseDto> getPayments(Pageable pageable) {
-
         return paymentRepository.findAllByOrderByIdAsc(pageable).map(mapper::toDto);
+    }
+
+    public Page<PaymentEventResponseDto> getPayments(PaymentSearchCriteria criteria, Pageable pageable) {
+        log.info("Searching payments: criteria={}, pageable={}", criteria, pageable);
+        return paymentRepository.findAll(PaymentSpecification.filter(criteria), pageable).map(mapper::toDto);
     }
 }

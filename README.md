@@ -47,7 +47,11 @@ curl.exe -s "http://localhost:8080/v1/payments/TXN-2026-0001234/status"
 ```bash
 curl.exe -s "http://localhost:8080/v1/payments?page=0&size=20"
 ```
-
+or with some criteria
+```bash
+curl.exe -s "http://localhost:8080/v1/payments?page=0&size=20&sort=eventTimestamp,desc
+    &debtorName=João&fromEventTimestamp=2020-01-1&toEventTimestamp=2027-12-31"
+```
 ## Architecture Decisions
 
 ### 1. Kafka as ingest buffer (KRaft mode — no Zookeeper)

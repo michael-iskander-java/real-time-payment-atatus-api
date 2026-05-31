@@ -2,9 +2,11 @@ package com.bancoluso.payments.service;
 
 import com.bancoluso.payments.dto.PaymentEventDto;
 import com.bancoluso.payments.dto.PaymentEventResponseDto;
+import com.bancoluso.payments.dto.PaymentSearchCriteria;
 import com.bancoluso.payments.dto.PaymentStatusResponse;
 import com.bancoluso.payments.entity.Payment;
 import com.bancoluso.payments.entity.PaymentStatus;
+import com.bancoluso.payments.entity.Payment_;
 import com.bancoluso.payments.exception.PaymentNotFoundException;
 import com.bancoluso.payments.mapper.PaymentMapper;
 import com.bancoluso.payments.repository.PaymentRepository;
@@ -19,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,10 +32,13 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.eq;
 import static com.bancoluso.payments.common.TestConstants.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -173,6 +180,40 @@ public class PaymentServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.getContent()).containsExactly(dto);
         verify(paymentRepository).findAllByOrderByIdAsc(pageable);
+        verify(mapper).toDto(payment);
+    }
+
+    @Test
+    void getPaymentsWithCriteria_shouldReturnPaginatedPayments() {
+        PaymentSearchCriteria criteria = new PaymentSearchCriteria("TXN-2026-0001234",
+                "EUR",
+                "John",
+                null,null,
+                "PENDING",null,null,null,null, null, null);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Payment_.ID));
+        Payment payment = existingPayment(PaymentStatus.PENDING, EVENT_TIME);
+        PaymentEventResponseDto dto = new PaymentEventResponseDto();
+        dto.setReferenceId(REFERENCE_ID);
+        dto.setAmount(new BigDecimal("1500.00"));
+        dto.setCurrency("EUR");
+        dto.setDebtorName("João Silva");
+        dto.setDebtorIban("PT50000201231234567890154");
+        dto.setCreditorIban("PT50000201239876543210154");
+        dto.setValueDate(LocalDate.of(2026, 4, 14));
+        dto.setStatus(PaymentStatus.PENDING);
+        dto.setEventTimestamp(EVENT_TIME);
+
+        Page<Payment> paymentPage = new PageImpl<>(List.of(payment), pageable,1);
+        when(paymentRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(paymentPage);
+        when(mapper.toDto(payment)).thenReturn(dto);
+
+        Page<PaymentEventResponseDto> result = paymentService.getPayments(criteria, pageable);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalElements());
+        assertEquals(1, result.getContent().size());
+        assertEquals(REFERENCE_ID, result.getContent().get(0).getReferenceId());
+        verify(paymentRepository).findAll(any(Specification.class), eq(pageable));
         verify(mapper).toDto(payment);
     }
 

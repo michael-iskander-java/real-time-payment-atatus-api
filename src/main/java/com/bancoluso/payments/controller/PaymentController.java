@@ -2,6 +2,7 @@ package com.bancoluso.payments.controller;
 
 import com.bancoluso.payments.dto.PaymentEventDto;
 import com.bancoluso.payments.dto.PaymentEventResponseDto;
+import com.bancoluso.payments.dto.PaymentSearchCriteria;
 import com.bancoluso.payments.dto.PaymentStatusResponse;
 import com.bancoluso.payments.messaging.PaymentEventProducer;
 import com.bancoluso.payments.service.PaymentService;
@@ -41,9 +42,9 @@ public class PaymentController {
     }
 
     @GetMapping({"","/"})
-    public ResponseEntity<Page<PaymentEventResponseDto>> getPayments(Pageable pageable) {
-
-        return ResponseEntity.ok(paymentService.getPayments(pageable));
+    public ResponseEntity<Page<PaymentEventResponseDto>> getPayments(PaymentSearchCriteria criteria,
+                                                                     Pageable pageable) {
+        return ResponseEntity.ok(paymentService.getPayments(criteria, pageable));
     }
 
 }
